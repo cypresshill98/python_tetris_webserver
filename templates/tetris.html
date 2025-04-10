@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: url('/images/walter_white.jpg') no-repeat center center fixed;
+            background-size: 100% 100%;
+        }
+
+        h1, div {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Black border for text */
+        }
+
+        canvas {
+            border: 1px solid white;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: white; text-align: center; position: absolute; top: 10px; width: 100%;">This is TETRIS Bitch!</h1>
+    <canvas id="tetris" width="300" height="600"></canvas>
+    <div id="score" style="color: white; font-size: 20px; position: absolute; top: 50px; left: 320px;">SCORE: 0</div>
+    <div id="scoresTable" style="color: white; font-size: 16px; position: absolute; top: 200px; left: 320px; width: 300px; height: 570px; overflow: auto; border: 1px solid white;">
+        <h2 style="position: sticky; top: 0; background-color: black; margin: 0; padding: 5px;">Scores</h2>
+        <table style="border: 1px solid white; border-collapse: collapse; width: 100%;">
+            <thead style="position: sticky; top: 30px; background-color: black;">
+                <tr>
+                    <th style="border: 1px solid white; padding: 5px;">Name</th>
+                    <th style="border: 1px solid white; padding: 5px;">Score</th>
+                    <th style="border: 1px solid white; padding: 5px;">Time</th>
+                    <th style="border: 1px solid white; padding: 5px;">Date</th>
+                </tr>
+            </thead>
+            <tbody id="scoresBody">
+                <!-- Scores will be dynamically populated here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        context.scale(30, 30);
+
+        const arena = createMatrix(10, 20);
+
+        const player = {
+            pos: {x: 0, y: 0},
+            matrix: createPiece('T'),
+        };
+
+        const colors = [
+            null,
+            'red',    // T
+            'yellow', // O
+            'orange', // L
+            'blue',   // J
+            'cyan',   // I
+            'green',  // S
+            'purple'  // Z
+        ];
+
+        const styles = [
+            null,
+            { start: 'red', end: 'pink' },    // T
+            { start: 'yellow', end: 'gold' }, // O
+            { start: 'orange', end: 'darkorange' }, // L
+            { start: 'blue', end: 'lightblue' },   // J
+            { start: 'cyan', end: 'lightcyan' },   // I
+            { start: 'green', end: 'lightgreen' }, // S
+            { start: 'purple', end: 'violet' }     // Z
+        ];
+
+        function createMatrix(width, height) {
+            const matrix = [];
+            while (height--) {
+                matrix.push(new Array(width).fill(0));
+            }
+            return matrix;
+        }
+
+        function createPiece(type) {
+            if (type === 'T') {
+                return [
+                    [0, 1, 0],
+                    [1, 1, 1],
+                    [0, 0, 0],
+                ];
+            } else if (type === 'O') {
+                return [
+                    [2, 2],
+                    [2, 2],
+                ];
+            } else if (type === 'L') {
+                return [
+                    [0, 3, 0],
+                    [0, 3, 0],
+                    [0, 3, 3],
+                ];
+            } else if (type === 'J') {
+                return [
+                    [0, 4, 0],
+                    [0, 4, 0],
+                    [4, 4, 0],
+                ];
+            } else if (type === 'I') {
+                return [
+                    [0, 5, 0, 0],
+                    [0, 5, 0, 0],
+                    [0, 5, 0, 0],
+                    [0, 5, 0, 0],
+                ];
+            } else if (type === 'S') {
+                return [
+                    [0, 6, 6],
+                    [6, 6, 0],
+                    [0, 0, 0],
+                ];
+            } else if (type === 'Z') {
+                return [
+                    [7, 7, 0],
+                    [0, 7, 7],
+                    [0, 0, 0],
+                ];
+            }
+        }
+
+        const jesseImage = new Image();
+        jesseImage.src = '/images/jesse.png';
+
+        const gusImage = new Image();
+        gusImage.src = '/images/gus.png';
+
+        const juniorImage = new Image();
+        juniorImage.src = '/images/junior.png';
+
+        const tucoImage = new Image();
+        tucoImage.src = '/images/tuco.png';
+
+        const mikeImage = new Image();
+        mikeImage.src = '/images/mike.png';
+
+        const saulImage = new Image();
+        saulImage.src = '/images/saul.png';
+
+        const skylerImage = new Image();
+        skylerImage.src = '/images/skyler.png';
+
+        const hankImage = new Image();
+        hankImage.src = '/images/hank.png';
+
+        function drawMatrix(matrix, offset) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        if (value === 1) { // Apply image only for T shape
+                            if (tucoImage.complete) {
+                                context.drawImage(tucoImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                tucoImage.onload = () => {
+                                    context.drawImage(tucoImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else if (value === 2) { // Apply image only for O shape
+                            if (jesseImage.complete) {
+                                context.drawImage(jesseImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                jesseImage.onload = () => {
+                                    context.drawImage(jesseImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else if (value === 3) { // Apply image only for L shape
+                            if (mikeImage.complete) {
+                                context.drawImage(mikeImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                mikeImage.onload = () => {
+                                    context.drawImage(mikeImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else if (value === 4) { // Apply image only for J shape
+                            if (hankImage.complete) {
+                                context.drawImage(hankImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                hankImage.onload = () => {
+                                    context.drawImage(hankImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else if (value === 5) { // Apply image only for I shape
+                            if (juniorImage.complete) {
+                                context.drawImage(juniorImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                juniorImage.onload = () => {
+                                    context.drawImage(juniorImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else if (value === 6) { // Apply image only for S shape
+                            if (saulImage.complete) {
+                                context.drawImage(saulImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                saulImage.onload = () => {
+                                    context.drawImage(saulImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else if (value === 7) { // Apply image only for Z shape
+                            if (skylerImage.complete) {
+                                context.drawImage(skylerImage, x + offset.x, y + offset.y, 1, 1);
+                            } else {
+                                skylerImage.onload = () => {
+                                    context.drawImage(skylerImage, x + offset.x, y + offset.y, 1, 1);
+                                };
+                            }
+                        } else {
+                            context.fillStyle = colors[value];
+                            context.fillRect(x + offset.x, y + offset.y, 1, 1);
+                        }
+                    }
+                });
+            });
+        }
+
+        function drawGrid() {
+            for (let y = 0; y < arena.length; y++) {
+                for (let x = 0; x < arena[y].length; x++) {
+                    context.fillStyle = (x + y) % 2 === 0 ? 'rgba(85, 85, 85, 0.5)' : 'rgba(102, 102, 102, 0.5)'; // Adjusted grid colors for 50% transparency
+                    context.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function draw() {
+            context.fillStyle = 'black';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (gusImage.complete) {
+                context.drawImage(gusImage, 0, 0, arena[0].length, arena.length);
+            } else {
+                gusImage.onload = () => {
+                    context.drawImage(gusImage, 0, 0, arena[0].length, arena.length);
+                };
+            }
+
+            drawGrid();
+            drawMatrix(arena, {x: 0, y: 0});
+            drawMatrix(player.matrix, player.pos);
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        arena[y + player.pos.y][x + player.pos.x] = value;
+                    }
+                });
+            });
+        }
+
+        let score = 0;
+        let highScore = 0;
+
+        function updateScore() {
+            document.getElementById('score').innerText = 'SCORE: ' + score;
+        }
+
+        function updateHighScore() {
+            if (score > highScore) {
+                highScore = score;
+                document.getElementById('highScore').innerText = 'HIGH SCORE: ' + highScore;
+            }
+        }
+
+        function arenaSweep() {
+            let rowCount = 1;
+            outer: for (let y = arena.length - 1; y >= 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row);
+                ++y;
+
+                score += rowCount * 10;
+                rowCount *= 2;
+
+                dropAudio = 0;
+
+                // Play sound when a row is filled
+                const rowFilledSound = new Audio('/audio/yes_science.mp3');
+                rowFilledSound.play();
+            }
+            updateScore();
+            updateHighScore();
+        } 
+
+        function playerDrop() {
+            if (document.getElementById('gameOverMessage').style.display === 'block') {
+                return; // Prevent dropping new shapes if the game is over
+            }
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--;
+                dropAudio = 1;
+                merge(arena, player);
+                arenaSweep();
+                playerReset();
+
+                if (dropAudio == 1) {
+                    const hitSound = new Audio('/audio/waltuh.mp3');
+                    hitSound.volume = 0.5;
+                    hitSound.play();
+                }
+            }
+            dropCounter = 0;
+        }
+
+        function resetGame() {
+            score = 0;
+            updateScore();
+            updateHighScore(); // Update high score when resetting
+
+            startTime = Date.now(); // Reset the timer
+
+            arena.forEach(row => row.fill(0)); // Clear the arena
+            playerReset(); // Reset the player position and piece
+
+            document.getElementById('gameOverMessage').style.display = 'none'; // Hide game over message
+            document.getElementById('namePrompt').style.display = 'none'; // Ensure name prompt is hidden
+        }
+
+        function playerReset() {
+            const pieces = 'ILJOTSZ';
+            player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+            player.pos.y = 0;
+            player.pos.x = (arena[0].length / 2 | 0) -
+                           (player.matrix[0].length / 2 | 0);
+
+            if (collide(arena, player)) {
+                displayGameOver(); // Trigger game over display
+            }
+        }
+
+        function displayGameOver() {
+            const gameOverMessage = document.getElementById('gameOverMessage');
+            gameOverMessage.style.display = 'block';
+
+            // Play sound when the game is over
+            const gameOverSound = new Audio('/audio/say_my_name.mp3');
+            gameOverSound.play();
+
+            // Show name prompt after game over
+            setTimeout(() => {
+                if (document.getElementById('namePrompt').style.display !== 'block') {
+                    displayNamePrompt();
+                }
+            }, 1000);
+
+            // Update the score table after game over
+            fetchScores();
+        }
+
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 &&
+                       (arena[y + o.y] &&
+                        arena[y + o.y][x + o.x]) !== 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        let dropCounter = 0;
+        let dropInterval = 1000;
+
+        let lastTime = 0;
+        let isPaused = false;
+
+        document.addEventListener('keydown', event => {
+            if (isPaused && event.keyCode !== 27) {
+                return; // Ignore all inputs except ESC when paused
+            }
+            if (event.keyCode === 37) {
+                player.pos.x--;
+                if (collide(arena, player)) {
+                    player.pos.x++;
+                }
+            } else if (event.keyCode === 39) {
+                player.pos.x++;
+                if (collide(arena, player)) {
+                    player.pos.x--;
+                }
+            } else if (event.keyCode === 40) {
+                playerDrop();
+            } else if (event.keyCode === 38) { // Arrow Up for rotation
+                playerRotate(1);
+            } else if (event.keyCode === 27) { // ESC key for pause
+                isPaused = !isPaused;
+            }
+        });
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [
+                        matrix[x][y],
+                        matrix[y][x],
+                    ] = [
+                        matrix[y][x],
+                        matrix[x][y],
+                    ];
+                }
+            }
+
+            if (dir > 0) {
+                matrix.forEach(row => row.reverse());
+            } else {
+                matrix.reverse();
+            }
+
+            return matrix;
+        }
+
+        function playerRotate(dir) {
+            const pos = player.pos.x;
+            let offset = 1;
+            rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) {
+                    rotate(player.matrix, -dir);
+                    player.pos.x = pos;
+                    return;
+                }
+            }
+        }
+
+        function update(time = 0) {
+            if (isPaused) {
+                if (gusImage.complete) {
+                    context.drawImage(gusImage, 0, 0, arena[0].length, arena.length);
+                } else {
+                    gusImage.onload = () => {
+                        context.drawImage(gusImage, 0, 0, arena[0].length, arena.length);
+                    };
+                }
+                context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.fillStyle = 'white';
+                context.font = '1px Arial';
+                context.fillText('Paused', 4, 10);
+                requestAnimationFrame(update);
+                return;
+            }
+
+            const deltaTime = time - lastTime;
+
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                playerDrop();
+            }
+
+            lastTime = time;
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        playerReset();
+        update();
+
+        let timerElement = document.createElement('div');
+        timerElement.id = 'timer';
+        timerElement.style.color = 'white';
+        timerElement.style.fontSize = '20px';
+        timerElement.style.position = 'absolute';
+        timerElement.style.top = '80px';
+        timerElement.style.left = '320px';
+        document.body.appendChild(timerElement);
+
+        let startTime = Date.now();
+        function updateTimer() {
+            let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            let minutes = Math.floor(elapsedTime / 60);
+            let seconds = elapsedTime % 60;
+            timerElement.innerText = `TIMER: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        setInterval(updateTimer, 1000);
+
+        // Add game over message element
+        const gameOverMessage = document.createElement('div');
+        gameOverMessage.id = 'gameOverMessage';
+        gameOverMessage.style.color = 'white';
+        gameOverMessage.style.fontSize = '30px';
+        gameOverMessage.style.position = 'absolute';
+        gameOverMessage.style.top = '50%';
+        gameOverMessage.style.left = '50%';
+        gameOverMessage.style.transform = 'translate(-50%, -50%)';
+        gameOverMessage.style.textAlign = 'center';
+        gameOverMessage.style.display = 'none';
+        gameOverMessage.innerHTML = 'GAME OVER';
+        document.body.appendChild(gameOverMessage);
+
+        // Add high score element
+        const highScoreElement = document.createElement('div');
+        highScoreElement.id = 'highScore';
+        highScoreElement.style.color = 'white';
+        highScoreElement.style.fontSize = '20px';
+        highScoreElement.style.position = 'absolute';
+        highScoreElement.style.top = '110px';
+        highScoreElement.style.left = '320px';
+        highScoreElement.innerText = 'HIGH SCORE: 0';
+        document.body.appendChild(highScoreElement);
+
+        const controlsText = document.createElement('div');
+        controlsText.style.color = 'gray';
+        controlsText.style.fontSize = '20px';
+        controlsText.style.position = 'absolute';
+        controlsText.style.top = '140px';
+        controlsText.style.left = '320px';
+        controlsText.innerText = 'Arrow keys to control, ESC to pause';
+        document.body.appendChild(controlsText);
+
+        const audio = document.createElement('audio');
+        audio.src = '/audio/breaking_bad_theme.mp3';
+        audio.loop = true;
+        audio.autoplay = true;
+        document.body.appendChild(audio);
+
+        // Ensure audio plays on page load
+        const backgroundAudio = new Audio('/audio/breaking_bad_theme.mp3');
+        backgroundAudio.loop = true;
+        backgroundAudio.autoplay = true;
+        backgroundAudio.volume = 0.5;
+
+        // Add a user interaction fallback for autoplay restrictions
+        document.body.addEventListener('click', () => {
+            if (backgroundAudio.paused) {
+                backgroundAudio.play();
+            }
+        });
+
+        const namePrompt = document.createElement('div');
+        namePrompt.id = 'namePrompt';
+        namePrompt.style.color = 'white';
+        namePrompt.style.fontSize = '20px';
+        namePrompt.style.position = 'absolute';
+        namePrompt.style.top = '60%';
+        namePrompt.style.left = '50%';
+        namePrompt.style.transform = 'translate(-50%, -50%)';
+        namePrompt.style.textAlign = 'center';
+        namePrompt.style.display = 'none';
+        namePrompt.innerHTML = `Enter your name: <input type='text' id='playerName'><br><button onclick='submitScore()'>Submit</button>`;
+        document.body.appendChild(namePrompt);
+
+        function displayNamePrompt() {
+            document.getElementById('namePrompt').style.display = 'block';
+            document.getElementById('gameOverMessage').style.display = 'none'; // Hide game over message
+        }
+
+        function submitScore() {
+            const playerName = document.getElementById('playerName').value;
+            if (playerName) {
+                const elapsedTime = document.getElementById('timer').innerText.split(' ')[1]; // Extract the timer value
+                fetch('/save_score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: playerName, score: score, time: elapsedTime }),
+                }).then(() => {
+                    document.getElementById('namePrompt').style.display = 'none';
+                    resetGame();
+                });
+            }
+        }
+
+        function fetchScores() {
+            fetch('/scores.json')
+                .then(response => response.json())
+                .then(data => {
+                    const scoresBody = document.getElementById('scoresBody');
+                    scoresBody.innerHTML = '';
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        row.forEach(cell => {
+                            const td = document.createElement('td');
+                            td.style.border = '1px solid white';
+                            td.style.padding = '5px';
+                            td.textContent = cell;
+                            tr.appendChild(td);
+                        });
+                        scoresBody.appendChild(tr);
+                    });
+                });
+        }
+
+        // Fetch scores when the page loads
+        fetchScores();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/scores.json')
+                .then(response => response.json())
+                .then(data => {
+                    const scoresBody = document.getElementById('scoresBody');
+                    scoresBody.innerHTML = '';
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        row.forEach(cell => {
+                            const td = document.createElement('td');
+                            td.style.border = '1px solid white';
+                            td.style.padding = '5px';
+                            td.textContent = cell;
+                            tr.appendChild(td);
+                        });
+                        scoresBody.appendChild(tr);
+                    });
+                });
+        });
+    </script>
+</body>
+</html>
