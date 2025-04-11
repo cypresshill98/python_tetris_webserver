@@ -313,7 +313,7 @@
         };
 
         window.dropPiece = function() {
-            playerDrop();
+            fastDropActive = true;
         };
 
         const colors = [
@@ -520,8 +520,14 @@
             });
         }
 
+        function updateSpeed() {
+            const level = Math.floor(score / 100);
+            dropInterval = Math.max(1000 - level * 200, 100); // minimum interval = 100ms
+        }
+
         function updateScore() {
             document.getElementById('score').innerText = 'SCORE: ' + score;
+            updateSpeed();
         }
 
         function updateHighScore() {
