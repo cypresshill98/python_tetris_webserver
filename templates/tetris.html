@@ -13,7 +13,7 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-            font-size: 16px;
+            font-size: 14px; /* Reduced base font size */
         }
 
         body {
@@ -43,7 +43,7 @@
         h1 {
             color: white;
             text-align: center;
-            font-size: 1.8rem;
+            font-size: 1.6rem; /* Reduced font size */
             margin: 10px 0;
         }
 
@@ -56,7 +56,7 @@
             margin: 8px 0;
             text-align: center;
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem; /* Reduced font size */
             font-weight: bold;
         }
 
@@ -88,7 +88,7 @@
         #gameOverMessage {
             display: none;
             color: white;
-            font-size: 2.5rem;
+            font-size: 2.2rem; /* Reduced font size */
             position: absolute;
             top: 50%;
             left: 50%;
@@ -196,11 +196,11 @@
 </head>
 <body>
     <h1>This is TETRIS Bitch!</h1>
-    <canvas id="tetris"></canvas>
     <div id="score">SCORE: 0</div>
     <div id="timer">TIMER: 0:00</div>
     <div id="highScore">HIGH SCORE: 0</div>
     <div id="controlsText">Arrow keys to control, ESC to pause</div>
+    <canvas id="tetris"></canvas>
     <div class="mobile-controls">
         <button ontouchstart="window.moveLeft()">◀️</button>
         <button ontouchstart="window.rotatePiece()">🔄</button>
@@ -240,6 +240,7 @@
             e.preventDefault();
         });
 
+
         // Game variables
         let player;
         let arena;
@@ -263,12 +264,12 @@
             );
             canvas.width = canvasWidth;
             canvas.height = canvasWidth * 2; // Maintain 1:2 aspect ratio
-            
+
             const context = canvas.getContext('2d');
-            
+
             // Calculate scale factor based on canvas size
             scaleFactor = canvas.width / 300; // Original width was 300
-            
+
             // Scale the context to maintain game proportions
             context.scale(scaleFactor * 30, scaleFactor * 30);
 
@@ -282,13 +283,16 @@
             playerReset();
             update();
         }
-
+        /*
         // Handle window resize
         window.addEventListener('resize', function() {
-            initGame();
-        });
+            const canvas = document.getElementById('tetris');
+            const newCanvasWidth = Math.min(
+            window.innerWidth >= 768 ? 250 : 300, // Smaller on desktop
+            window.innerWidth - 40
+        );
+        */
 
-        // [Rest of your JavaScript code remains exactly the same...]
         // Mobile controls
         window.moveLeft = function() {
             player.pos.x--;
@@ -401,7 +405,7 @@
         function drawMatrix(matrix, offset) {
             const canvas = document.getElementById('tetris');
             const context = canvas.getContext('2d');
-            
+
             matrix.forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (value !== 0) {
@@ -473,7 +477,7 @@
         function drawGrid() {
             const canvas = document.getElementById('tetris');
             const context = canvas.getContext('2d');
-            
+
             for (let y = 0; y < arena.length; y++) {
                 for (let x = 0; x < arena[y].length; x++) {
                     context.fillStyle = (x + y) % 2 === 0 ? 'rgba(85, 85, 85, 0.5)' : 'rgba(102, 102, 102, 0.5)';
@@ -485,7 +489,7 @@
         function draw() {
             const canvas = document.getElementById('tetris');
             const context = canvas.getContext('2d');
-            
+
             context.fillStyle = 'black';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -628,12 +632,12 @@
     if (isPaused && event.key !== 'Escape') {
         return;
     }
-    
+
     // Check if the pressed key is one we want to handle
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape'].includes(event.key)) {
         event.preventDefault(); // Prevent default browser behavior (scrolling)
     }
-    
+
     switch (event.key) {
         case 'ArrowLeft':
             player.pos.x--;
@@ -699,7 +703,7 @@
         function update(time = 0) {
             const canvas = document.getElementById('tetris');
             const context = canvas.getContext('2d');
-            
+
             if (isPaused) {
                 if (gusImage.complete) {
                     context.drawImage(gusImage, 0, 0, arena[0].length, arena.length);
@@ -795,24 +799,26 @@
         };
 
         function fetchScores() {
-            fetch('/scores.json')
-                .then(response => response.json())
-                .then(data => {
-                    const scoresBody = document.getElementById('scoresBody');
-                    scoresBody.innerHTML = '';
-                    data.forEach(row => {
-                        const tr = document.createElement('tr');
-                        row.forEach(cell => {
-                            const td = document.createElement('td');
-                            td.style.border = '1px solid white';
-                            td.style.padding = '5px';
-                            td.textContent = cell;
-                            tr.appendChild(td);
-                        });
-                        scoresBody.appendChild(tr);
-                    });
+        fetch('/scores.json')
+        .then(response => response.json())
+        .then(data => {
+            const scoresBody = document.getElementById('scoresBody');
+            scoresBody.innerHTML = '';
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.style.border = '1px solid white';
+                    td.style.padding = '5px';
+                    td.textContent = cell;
+                    tr.appendChild(td);
                 });
-        }
+                scoresBody.appendChild(tr);
+            });
+            // Show the scores table
+            document.getElementById('scoresTable').style.display = 'block';
+        });
+}
 
         // Initialize game when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
