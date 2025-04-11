@@ -258,6 +258,19 @@
         const normalDropInterval = 1000;
         const fastDropInterval = 50;
 
+        const sounds = {
+        tight: new Audio('/audio/tight.mp3'),
+        biatch: new Audio('/audio/biatch.mp3'),
+        waltuh: new Audio('/audio/waltuh.mp3'),
+        minerals: new Audio('/audio/minerals.mp3'),
+        openanoor: new Audio('/audio/openanoor.mp3'),
+        saul: new Audio('/audio/saul.mp3'),
+        skyler: new Audio('/audio/skyler.mp3'),
+        yesScience: new Audio('/audio/yes_science.mp3'),
+        gameOver: new Audio('/audio/say_my_name.mp3'),
+        };
+
+
         // Initialize game
         function initGame() {
             const canvas = document.getElementById('tetris');
@@ -556,9 +569,9 @@
                 dropAudio = 0;
 
                 // Play sound when a row is filled
-                const rowFilledSound = new Audio('/audio/yes_science.mp3');
-                rowFilledSound.volume = 0.8;
-                rowFilledSound.play();
+                sounds.yesScience.currentTime = 0;
+                sounds.yesScience.volume = 0.8;
+                sounds.yesScience.play();
             }
             updateScore();
             updateHighScore();
@@ -588,40 +601,47 @@
         playerReset();
 
         // Play sounds based on shape type
+        //play tight
         if (dropAudio == 1 && isTshape) {
-            const hitSound = new Audio('/audio/tight.mp3');
-            hitSound.volume = 0.5;
-            hitSound.play();
+            sounds.tight.currentTime = 0;
+            sounds.tight.volume = 0.5;
+            sounds.tight.play();
         }
+        //play biatch
         if (dropAudio == 1 && isOshape) {
-            const hitSound = new Audio('/audio/biatch.mp3');
-            hitSound.volume = 0.7;
-            hitSound.play();
+            sounds.biatch.currentTime = 0;
+            sounds.biatch.volume = 0.7;
+            sounds.biatch.play();
         }
+        //play waltuh
         if (dropAudio == 1 && isLShape) {
-            const hitSound = new Audio('/audio/waltuh.mp3');
-            hitSound.volume = 0.5;
-            hitSound.play();
+            sounds.waltuh.currentTime = 0;
+            sounds.waltuh.volume = 0.5;
+            sounds.waltuh.play();
         }
+        //play minerals
         if (dropAudio == 1 && isJShape) {
-            const hitSound = new Audio('/audio/minerals.mp3');
-            hitSound.volume = 0.5;
-            hitSound.play();
+            sounds.minerals.currentTime = 0;
+            sounds.minerals.volume = 0.5;
+            sounds.minerals.play();
         }
+        //play openanoor
         if (dropAudio == 1 && isIShape) {
-            const hitSound = new Audio('/audio/openanoor.mp3');
-            hitSound.volume = 0.5;
-            hitSound.play();
+            sounds.openanoor.currentTime = 0;
+            sounds.openanoor.volume = 0.5;
+            sounds.openanoor.play();
         }
+        //play saul
         if (dropAudio == 1 && isSShape) {
-            const hitSound = new Audio('/audio/saul.mp3');
-            hitSound.volume = 1;
-            hitSound.play();
+            sounds.saul.currentTime = 0;
+            sounds.saul.volume = 1;
+            sounds.saul.play();
         }
+        //play skyler
         if (dropAudio == 1 && isZShape) {
-            const hitSound = new Audio('/audio/skyler.mp3');
-            hitSound.volume = 0.5;
-            hitSound.play();
+            sounds.skyler.currentTime = 0;
+            sounds.skyler.volume = 0.5;
+            sounds.skyler.play();
         }
 
     }
@@ -656,8 +676,8 @@
         function displayGameOver() {
             document.getElementById('gameOverMessage').style.display = 'block';
 
-            const gameOverSound = new Audio('/audio/say_my_name.mp3');
-            gameOverSound.play();
+            sounds.gameOver.currentTime = 0;
+            sounds.gameOver.play();
 
             setTimeout(() => {
                 if (document.getElementById('namePrompt').style.display !== 'block') {
@@ -801,30 +821,34 @@
         backgroundAudio.volume = 0.5;
 
         function startAudio() {
-            const playPromise = backgroundAudio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    // Auto-play was prevented, show a play button
-                    const playButton = document.createElement('button');
-                    playButton.textContent = 'Play Music';
-                    playButton.style.position = 'fixed';
-                    playButton.style.bottom = '20px';
-                    playButton.style.right = '20px';
-                    playButton.style.zIndex = '1000';
-                    playButton.style.padding = '10px 15px';
-                    playButton.style.fontSize = '1rem';
-                    playButton.style.backgroundColor = '#4CAF50';
-                    playButton.style.color = 'white';
-                    playButton.style.border = 'none';
-                    playButton.style.borderRadius = '5px';
-                    playButton.onclick = () => {
-                        backgroundAudio.play();
-                        playButton.remove();
-                    };
-                    document.body.appendChild(playButton);
-                });
-            }
-        }
+        // Unlock all sounds silently
+        for (const key in sounds) {
+            const sound = sounds[key];
+            sound.muted = true;
+            sound.play().then(() => {
+                sound.pause();
+                sound.currentTime = 0;
+                sound.muted = false;
+            }).catch(() => {
+                sound.muted = false;
+            });
+    }
+
+    const playPromise = backgroundAudio.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            // Show play button if autoplay fails
+            const playButton = document.createElement('button');
+            playButton.textContent = 'Play Music';
+            playButton.style = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 10px 15px; font-size: 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 5px;';
+            playButton.onclick = () => {
+                backgroundAudio.play();
+                playButton.remove();
+            };
+            document.body.appendChild(playButton);
+        });
+    }
+}
 
         // Start audio on any user interaction
         document.addEventListener('click', startAudio, { once: true });
