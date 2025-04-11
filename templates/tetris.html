@@ -253,6 +253,10 @@
         let startTime = Date.now();
         let dropAudio = 0;
         let scaleFactor = 1;
+        let pieceType;
+        let fastDropActive = false;
+        const normalDropInterval = 1000;
+        const fastDropInterval = 50;
 
         // Initialize game
         function initGame() {
@@ -547,6 +551,7 @@
 
                 // Play sound when a row is filled
                 const rowFilledSound = new Audio('/audio/yes_science.mp3');
+                rowFilledSound.volume = 0.8;
                 rowFilledSound.play();
             }
             updateScore();
@@ -554,25 +559,68 @@
         }
 
         function playerDrop() {
-            if (document.getElementById('gameOverMessage').style.display === 'block') {
-                return;
-            }
-            player.pos.y++;
-            if (collide(arena, player)) {
-                player.pos.y--;
-                dropAudio = 1;
-                merge(arena, player);
-                arenaSweep();
-                playerReset();
+    if (document.getElementById('gameOverMessage').style.display === 'block') {
+        return;
+    }
+    player.pos.y++;
+    if (collide(arena, player)) {
+        player.pos.y--;
+        fastDropActive = false;
+        dropAudio = 1;
 
-                if (dropAudio == 1) {
-                    const hitSound = new Audio('/audio/waltuh.mp3');
-                    hitSound.volume = 0.5;
-                    hitSound.play();
-                }
-            }
-            dropCounter = 0;
+        // Check currect piece type
+        const isTshape = player.matrix.some(row => row.includes(1)); //Tuco
+        const isOshape = player.matrix.some(row => row.includes(2)); //Jesse
+        const isLShape = player.matrix.some(row => row.includes(3)); //Mike
+        const isJShape = player.matrix.some(row => row.includes(4)); //Hank
+        const isIShape = player.matrix.some(row => row.includes(5)); //Junior
+        const isSShape = player.matrix.some(row => row.includes(6)); //Saul
+        const isZShape = player.matrix.some(row => row.includes(7)); //Skyler
+
+        merge(arena, player);
+        arenaSweep();
+        playerReset();
+
+        // Play sounds based on shape type
+        if (dropAudio == 1 && isTshape) {
+            const hitSound = new Audio('/audio/tight.mp3');
+            hitSound.volume = 0.5;
+            hitSound.play();
         }
+        if (dropAudio == 1 && isOshape) {
+            const hitSound = new Audio('/audio/biatch.mp3');
+            hitSound.volume = 0.7;
+            hitSound.play();
+        }
+        if (dropAudio == 1 && isLShape) {
+            const hitSound = new Audio('/audio/waltuh.mp3');
+            hitSound.volume = 0.5;
+            hitSound.play();
+        }
+        if (dropAudio == 1 && isJShape) {
+            const hitSound = new Audio('/audio/minerals.mp3');
+            hitSound.volume = 0.5;
+            hitSound.play();
+        }
+        if (dropAudio == 1 && isIShape) {
+            const hitSound = new Audio('/audio/openanoor.mp3');
+            hitSound.volume = 0.5;
+            hitSound.play();
+        }
+        if (dropAudio == 1 && isSShape) {
+            const hitSound = new Audio('/audio/saul.mp3');
+            hitSound.volume = 1;
+            hitSound.play();
+        }
+        if (dropAudio == 1 && isZShape) {
+            const hitSound = new Audio('/audio/skyler.mp3');
+            hitSound.volume = 0.5;
+            hitSound.play();
+        }
+
+    }
+    dropCounter = 0;
+}
 
         function resetGame() {
             score = 0;
@@ -652,7 +700,7 @@
             }
             break;
         case 'ArrowDown':
-            playerDrop();
+            fastDropActive = true;
             break;
         case 'ArrowUp':
             playerRotate(1);
@@ -723,8 +771,8 @@
 
             const deltaTime = time - lastTime;
             dropCounter += deltaTime;
-            if (dropCounter > dropInterval) {
-                playerDrop();
+            if (dropCounter > (fastDropActive ? fastDropInterval : dropInterval)) {
+             playerDrop();
             }
 
             lastTime = time;
